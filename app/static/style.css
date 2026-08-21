@@ -1,0 +1,93 @@
+:root {
+  --ink: #1f2320;
+  --paper: #faf8f4;
+  --card: #ffffff;
+  --line: #ddd6c9;
+  --accent: #93641f;
+  --accent-ink: #ffffff;
+  --warn-bg: #fbe9e7;
+  --warn-ink: #7a2e18;
+  --muted: #7a7469;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.topbar {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--card);
+}
+
+.brand { font-weight: 600; text-decoration: none; color: var(--ink); }
+
+.container { max-width: 720px; margin: 0 auto; padding: 1.5rem; }
+
+h1 { font-size: 1.4rem; }
+
+.form { display: flex; flex-direction: column; gap: 0.75rem; }
+
+fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 1rem; }
+
+label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; margin-bottom: 0.5rem; }
+
+label.checkbox { flex-direction: row; align-items: center; gap: 0.5rem; }
+
+input[type=text], select, textarea {
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  border-radius: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+.link-btn { background: none; border: none; color: var(--muted); text-decoration: underline; cursor: pointer; }
+
+.muted { color: var(--muted); }
+
+.warning { background: var(--warn-bg); color: var(--warn-ink); padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+
+.notice { background: #eef3ea; padding: 0.75rem 1rem; border-radius: 8px; margin: 1rem 0; }
+
+.deals-table { width: 100%; border-collapse: collapse; }
+.deals-table th, .deals-table td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--line); }
+
+.participant-list { list-style: none; padding: 0; }
+.participant-list li { padding: 0.4rem 0; border-bottom: 1px solid var(--line); }
+
+.file-list { list-style: none; padding: 0; }
+.file-list li { padding: 0.3rem 0; }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #ece7dd;
+    --paper: #17181a;
+    --card: #202224;
+    --line: #34363a;
+    --accent: #d3a35f;
+    --accent-ink: #1f2320;
+    --warn-bg: #3a2620;
+    --warn-ink: #f2b8a3;
+    --muted: #9a958a;
+  }
+  .notice { background: #24301f; color: #d7e6cd; }
+}

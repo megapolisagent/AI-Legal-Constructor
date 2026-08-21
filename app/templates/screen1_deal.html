@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Новая сделка{% endblock %}
+{% block content %}
+  <h1>Экран 1 — Новая сделка</h1>
+  <form method="post" class="form">
+    <label>Тип сделки
+      <select name="deal_type" required>
+        {% for t in deal_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+      </select>
+    </label>
+
+    <fieldset>
+      <legend>Объект</legend>
+      <label>Адрес <input type="text" name="address" required></label>
+      <label>Кадастровый номер <input type="text" name="cadastral_number" required></label>
+      <label>Тип объекта <input type="text" name="property_type" placeholder="квартира, дом..."></label>
+      <label>Площадь <input type="text" name="area"></label>
+      <label>Комнат <input type="text" name="rooms"></label>
+      <label>Основание права собственности <input type="text" name="ownership_basis"></label>
+      <label>Обременения <input type="text" name="encumbrances"></label>
+    </fieldset>
+
+    <button class="btn" type="submit">Далее — участники</button>
+  </form>
+{% endblock %}

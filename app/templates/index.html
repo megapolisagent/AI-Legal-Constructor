@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Сделки{% endblock %}
+{% block content %}
+  <h1>Сделки</h1>
+  <p><a class="btn" href="{{ url_for('new_deal') }}">+ Новая сделка</a></p>
+
+  {% if deals %}
+    <table class="deals-table">
+      <thead>
+        <tr><th>Адрес</th><th>Тип</th><th>Участников</th><th>Статус</th><th>Создана</th></tr>
+      </thead>
+      <tbody>
+        {% for d in deals %}
+        <tr>
+          <td><a href="{{ url_for('generate', deal_id=d.deal_id) }}">{{ d.address or "(без адреса)" }}</a></td>
+          <td>{{ d.deal_type }}</td>
+          <td>{{ d.participants|length }}</td>
+          <td>{{ d.status }}</td>
+          <td>{{ d.created_at[:10] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">Пока нет ни одной сделки.</p>
+  {% endif %}
+{% endblock %}

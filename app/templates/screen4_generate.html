@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Генерация{% endblock %}
+{% block content %}
+  <h1>Экран 4 — Генерация и результат</h1>
+
+  <h2>Комплект по этой сделке ({{ tasks|length }} документов)</h2>
+  <ul>
+    {% for t in tasks %}<li>{{ t.label }} — {{ t.document_type }}</li>{% endfor %}
+  </ul>
+
+  {% if problems %}
+    <div class="warning">
+      <strong>Не хватает данных — дозаполните перед сборкой:</strong>
+      <ul>{% for m in problems %}<li>{{ m }}</li>{% endfor %}</ul>
+    </div>
+  {% else %}
+    <form method="post">
+      <button class="btn btn-primary" type="submit">Собрать комплект</button>
+    </form>
+  {% endif %}
+
+  {% if template_errors %}
+    <div class="warning">
+      <strong>Проблемы с шаблонами:</strong>
+      <ul>{% for e in template_errors %}<li>{{ e.label }}: {{ e.reason }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+
+  {% if notes %}
+    <div class="notice">{% for n in notes %}<p>{{ n }}</p>{% endfor %}</div>
+  {% endif %}
+
+  {% if existing_files %}
+    <h2>Готовые файлы</h2>
+    <ul class="file-list">
+      {% for f in existing_files %}
+        <li><a href="{{ url_for('download', deal_id=deal.deal_id, filename=f) }}">{{ f }}</a></li>
+      {% endfor %}
+    </ul>
+    <p><a class="btn" href="{{ url_for('download_all', deal_id=deal.deal_id) }}">Скачать всё архивом</a></p>
+  {% endif %}
+{% endblock %}

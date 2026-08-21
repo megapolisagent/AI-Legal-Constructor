@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Условия сделки{% endblock %}
+{% block content %}
+  <h1>Экран 3 — Условия сделки</h1>
+  <form method="post" class="form">
+    <fieldset>
+      <legend>Сделка</legend>
+      <label>Цена <input type="text" name="price" value="{{ deal.price }}" required></label>
+      <label>Порядок расчётов <input type="text" name="payment_schedule" value="{{ deal.payment_schedule }}"></label>
+      <label>Залог / задаток <input type="text" name="deposit" value="{{ deal.deposit }}"></label>
+      <label>Срок <input type="text" name="term" value="{{ deal.term }}"></label>
+      <label>Особые условия <textarea name="special_conditions">{{ deal.special_conditions }}</textarea></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Агентство</legend>
+      <label>Название <input type="text" name="agency_name" value="{{ deal.agency_name }}"></label>
+      <label>ИНН <input type="text" name="agency_inn" value="{{ deal.agency_inn }}"></label>
+      <label>ОГРН <input type="text" name="agency_ogrn" value="{{ deal.agency_ogrn }}"></label>
+      <label>Подписант <input type="text" name="agency_signatory" value="{{ deal.agency_signatory }}"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Комиссия по каждому участнику</legend>
+      {% for p in deal.participants %}
+        <label>{{ p.full_name }} ({{ p.side }})
+          <input type="text" name="commission_{{ p.participant_id }}" value="{{ p.commission_value }}">
+        </label>
+      {% endfor %}
+    </fieldset>
+
+    <button class="btn" type="submit">Далее — сборка комплекта</button>
+  </form>
+{% endblock %}

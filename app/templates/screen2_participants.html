@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Участники{% endblock %}
+{% block content %}
+  <h1>Экран 2 — Участники</h1>
+  <p class="muted">Сделка: {{ deal.address }} ({{ deal.deal_type }})</p>
+
+  {% if deal.participants %}
+    <ul class="participant-list">
+      {% for p in deal.participants %}
+      <li>
+        <strong>{{ p.full_name or "(без имени)" }}</strong> — {{ p.side }}
+        {% if p.ownership_share %}· доля {{ p.ownership_share }}{% endif %}
+        {% if p.is_married %}· в браке{% endif %}
+        {% if p.is_minor %}· несовершеннолетний{% endif %}
+        {% if p.has_other_co_owners %}· есть содольщики вне сделки{% endif %}
+        <form method="post" action="{{ url_for('delete_participant', deal_id=deal.deal_id, participant_id=p.participant_id) }}" style="display:inline">
+          <button class="link-btn" type="submit">удалить</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Участников пока нет — добавьте хотя бы одного с каждой стороны.</p>
+  {% endif %}
+
+  <h2>Добавить участника</h2>
+  <form method="post" class="form">
+    <label>Сторона
+      <select name="side" required>
+        {% for s in sides %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>ФИО <input type="text" name="full_name" required></label>
+    <label>Паспортные данные <input type="text" name="passport_data" required></label>
+    <label>Адрес регистрации <input type="text" name="registration_address"></label>
+    <label>Контакт <input type="text" name="contact"></label>
+    <label>Представитель (доверенность, если не сам) <input type="text" name="representative"></label>
+    <label>Доля в праве (если долевая собственность) <input type="text" name="ownership_share"></label>
+    <label class="checkbox"><input type="checkbox" name="is_married"> В браке</label>
+    <label class="checkbox"><input type="checkbox" name="is_minor"> Несовершеннолетний</label>
+    <label class="checkbox"><input type="checkbox" name="has_other_co_owners"> Есть содольщики вне сделки</label>
+    <button class="btn" type="submit">+ Добавить участника</button>
+  </form>
+
+  <p><a class="btn btn-primary" href="{{ url_for('terms', deal_id=deal.deal_id) }}">Далее — условия сделки</a></p>
+{% endblock %}
