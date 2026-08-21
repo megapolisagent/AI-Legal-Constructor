@@ -70,6 +70,7 @@ input[type=text], select, textarea {
 
 .scan-box { border-style: dashed; margin-bottom: 1.5rem; transition: background-color 0.15s, border-color 0.15s; }
 .scan-box.drag-over { background: var(--notice-bg, #eef3ea); border-color: var(--accent); }
+.file-status { font-size: 0.85rem; color: var(--accent); }
 
 .deals-table { width: 100%; border-collapse: collapse; }
 .deals-table th, .deals-table td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--line); }

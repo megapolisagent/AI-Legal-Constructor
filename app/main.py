@@ -75,11 +75,16 @@ def scan_egrn():
         error = ocr_reason
     else:
         file = request.files.get("photo")
-        if not file or not file.filename:
+        # Не "if file" — bool(FileStorage) в Werkzeug равен bool(filename), а не
+        # наличию содержимого. При вставке из буфера/перетаскивании имя файла может
+        # быть пустым, хотя байты реально есть — "if file" тогда ложно считает файл
+        # отсутствующим и теряет его (найдено 2026-08-21, воспроизведено отладкой).
+        data = file.read() if file is not None else b""
+        if not data:
             error = "Файл не выбран"
         else:
             try:
-                text = ocr.extract_text(file.read())
+                text = ocr.extract_text(data)
                 draft = ocr.parse_egrn(text)
             except ocr.OcrError as exc:
                 error = str(exc)  # уже понятный текст, см. ocr.py
@@ -132,11 +137,12 @@ def scan_passport(deal_id: str):
         error = ocr_reason
     else:
         file = request.files.get("photo")
-        if not file or not file.filename:
+        data = file.read() if file else b""
+        if not data:
             error = "Файл не выбран"
         else:
             try:
-                text = ocr.extract_text(file.read())
+                text = ocr.extract_text(data)
                 draft = ocr.parse_passport(text)
                 draft["side"] = request.form.get("side", "")
             except ocr.OcrError as exc:

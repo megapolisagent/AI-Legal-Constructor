@@ -35,9 +35,10 @@
           </select>
         </label>
         <input type="file" name="photo" accept="image/*,application/pdf,.pdf" required>
+        <span class="file-status"></span>
         <button class="btn" type="submit">Распознать</button>
       </form>
-      <p class="muted">Поддерживаются JPG, PNG, PDF. Можно перетащить файл в эту рамку или нажать Ctrl+V, чтобы вставить скриншот. Распознавание неидеально — проверьте и поправьте поля ниже перед добавлением.</p>
+      <p class="muted">Поддерживаются JPG, PNG, PDF. Можно перетащить файл в эту рамку или нажать Ctrl+V, чтобы вставить скриншот — после этого нажмите «Распознать». Распознавание неидеально — проверьте и поправьте поля ниже перед добавлением.</p>
     {% endif %}
     {% if ocr_error %}<p class="warning">{{ ocr_error }}</p>{% endif %}
   </fieldset>
