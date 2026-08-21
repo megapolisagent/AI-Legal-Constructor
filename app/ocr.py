@@ -1,52 +1,43 @@
-"""OCR — локальное распознавание фото паспорта/ЕГРН через Tesseract (Phase 1.1).
-Данные не покидают компьютер — тот же принцип, что и весь Вариант A (см. брифинг
-2026-08-21). Точность распознавания ограничена и не гарантируется: все извлечённые поля
-обязательно проходят экран проверки/правки, прежде чем попасть в Deal (main.py) —
-это прямое требование владельца, не техническая деталь."""
+"""OCR — локальное распознавание фото паспорта/ЕГРН через PaddleOCR (Phase 1.1,
+заменил Tesseract 2026-08-21 по итогам workspace/agent-runs/2026-08-21-ocr-vision-research.md
+— заметно точнее на кириллице и цифрах, тот же случай с кадастровым номером, где Tesseract
+промахивался, у PaddleOCR распознался верно). Данные не покидают компьютер — тот же принцип,
+что и весь Вариант A (см. брифинг 2026-08-21). Точность распознавания ограничена и не
+гарантируется: все извлечённые поля обязательно проходят экран проверки/правки, прежде чем
+попасть в Deal (main.py) — это прямое требование владельца, не техническая деталь.
+
+PaddlePaddle пока не публикует колёса под Python 3.14 (на котором работает само приложение) —
+распознавание запускается ОТДЕЛЬНЫМ процессом в venv312/ (Python 3.12), см. README
+"Распознавание фото (OCR) — отдельная установка" и scripts/paddle_ocr_worker.py."""
 from __future__ import annotations
 
 import io
 import os
 import re
-import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 
-import pytesseract
 from PIL import Image, UnidentifiedImageError
 
 MAX_PDF_PAGES = 10  # выписки/паспорта — единицы страниц; защита от случайно огромного файла
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-LOCAL_TESSDATA = REPO_ROOT / "tessdata"
-
-_TESSERACT_CANDIDATES = [
-    Path(r"C:\Program Files\Tesseract-OCR\tesseract.exe"),
-    Path.home() / "AppData" / "Local" / "Programs" / "Tesseract-OCR" / "tesseract.exe",
-]
-
-
-def _find_tesseract() -> Path | None:
-    found = shutil.which("tesseract")
-    if found:
-        return Path(found)
-    for candidate in _TESSERACT_CANDIDATES:
-        if candidate.exists():
-            return candidate
-    return None
+VENV_PYTHON = REPO_ROOT / "venv312" / "Scripts" / "python.exe"
+WORKER_SCRIPT = REPO_ROOT / "scripts" / "paddle_ocr_worker.py"
+RESULT_MARKER = "===PADDLE_OCR_RESULT==="
+WORKER_TIMEOUT_SEC = 120  # первый прогон включает разовую загрузку моделей — с запасом
 
 
 def is_available() -> tuple[bool, str]:
     """(доступен ли OCR, причина если нет) — для честного сообщения в UI вместо падения."""
-    exe = _find_tesseract()
-    if exe is None:
-        return False, "Tesseract не найден. Установка: winget install UB-Mannheim.TesseractOCR"
-    if not (LOCAL_TESSDATA / "rus.traineddata").exists():
-        return False, f"Нет русского языкового пакета — ожидался файл {LOCAL_TESSDATA / 'rus.traineddata'}"
-    pytesseract.pytesseract.tesseract_cmd = str(exe)
-    # Путь репозитория содержит пробел ("Рабочий стол") — передача через config
-    # ("--tessdata-dir <путь>") ломает разбор аргументов командной строки Windows.
-    # Переменная окружения надёжнее: subprocess наследует её без токенизации пути.
-    os.environ["TESSDATA_PREFIX"] = str(LOCAL_TESSDATA)
+    if not VENV_PYTHON.exists():
+        return False, (
+            f"Не найдено окружение для распознавания ({VENV_PYTHON}). "
+            "Установка — см. README, раздел «Распознавание фото (OCR)»."
+        )
+    if not WORKER_SCRIPT.exists():
+        return False, f"Не найден скрипт распознавания ({WORKER_SCRIPT})"
     return True, ""
 
 
@@ -95,6 +86,44 @@ def _bytes_to_images(data: bytes) -> list[Image.Image]:
         raise OcrError("Не удалось прочитать файл — попробуйте другой файл или пересканируйте документ") from exc
 
 
+def _ocr_single_image(image: Image.Image) -> str:
+    """Отдельный процесс venv312 на каждый вызов — простое и надёжное решение для
+    низкой частоты запросов Phase 1 (несколько документов на сделку), без постоянно
+    работающего сервиса, которым пришлось бы управлять отдельно."""
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        image.convert("RGB").save(tmp, format="PNG")
+        tmp_path = Path(tmp.name)
+    # PYTHONIOENCODING явно, не по умолчанию: без него дочерний процесс (venv312)
+    # печатает кириллицу в кодовой странице консоли Windows, а не в UTF-8, если сам
+    # Flask-сервер запущен без этой переменной в своём окружении (например, обычным
+    # `python run.py`) — часть кириллических слов приходила как заменяющие символы,
+    # регекс-парсеры (parse_egrn/parse_passport) их не находили (найдено 2026-08-21).
+    worker_env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
+    try:
+        try:
+            proc = subprocess.run(
+                [str(VENV_PYTHON), str(WORKER_SCRIPT), str(tmp_path)],
+                capture_output=True, text=True, encoding="utf-8", errors="replace",
+                timeout=WORKER_TIMEOUT_SEC, env=worker_env,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise OcrError("Распознавание заняло слишком много времени — попробуйте ещё раз") from exc
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+    if proc.returncode != 0 or RESULT_MARKER not in proc.stdout:
+        raise OcrError("Не удалось распознать файл — попробуйте другой файл или пересканируйте документ")
+
+    _, _, after_marker = proc.stdout.partition(RESULT_MARKER)
+    lines = []
+    for line in after_marker.strip().splitlines():
+        # формат строки воркера: "score\tтекст" (score сейчас не используется парсерами
+        # полей ниже — задел под подсветку низкой уверенности, см. handoff §7 / research §3)
+        _, _, text = line.partition("\t")
+        lines.append(text or line)
+    return "\n".join(lines)
+
+
 def extract_text(file_bytes: bytes) -> str:
     ok, reason = is_available()
     if not ok:
@@ -102,7 +131,7 @@ def extract_text(file_bytes: bytes) -> str:
     if not file_bytes:
         raise OcrError("Файл пустой")
     images = _bytes_to_images(file_bytes)
-    return "\n".join(pytesseract.image_to_string(img, lang="rus") for img in images)
+    return "\n".join(_ocr_single_image(img) for img in images)
 
 
 CYRILLIC_WORD = r"[А-ЯЁ][а-яёА-ЯЁ\-]+"

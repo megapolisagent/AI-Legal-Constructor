@@ -1,0 +1,7 @@
+# Отдельное окружение для распознавания (venv312, Python 3.12) — PaddlePaddle пока
+# не публикует колёса под Python 3.14, на котором работает само приложение.
+# Установка (один раз):
+#   py -3.12 -m venv venv312
+#   venv312\Scripts\pip install -r requirements-ocr.txt
+paddlepaddle
+paddleocr
