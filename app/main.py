@@ -2,10 +2,11 @@
 покидают компьютер Марии."""
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash, abort
 
 from .models import Deal, Participant, DEAL_TYPES, SIDES
 from . import storage
@@ -14,6 +15,11 @@ from .generator import generate_package, cross_check, GENERATED_DIR
 
 app = Flask(__name__)
 app.secret_key = "local-dev-only"  # Phase 1: один пользователь, локально — не требует секретности
+
+# Werkzeug debug-консоль умеет выполнять произвольный Python-код при падении страницы —
+# нельзя оставлять включённой, как только через форму пойдут настоящие данные клиента.
+# Включается явно: LEGAL_CONSTRUCTOR_DEBUG=1 python run.py — только для разработки.
+DEBUG = os.environ.get("LEGAL_CONSTRUCTOR_DEBUG") == "1"
 
 
 def _get_deal_or_404(deal_id: str) -> Deal:
@@ -34,7 +40,12 @@ def index():
 @app.route("/deals/new", methods=["GET", "POST"])
 def new_deal():
     if request.method == "POST":
-        deal = Deal.create(deal_type=request.form["deal_type"])
+        deal_type = request.form.get("deal_type", "")
+        if deal_type not in DEAL_TYPES:
+            # Реестр шаблонов (registry.py) ищет active-шаблон по точному совпадению
+            # deal_type — что угодно вне списка тихо сломало бы поиск шаблона на экране 4.
+            abort(400, f"Некорректный тип сделки: {deal_type!r}. Ожидалось одно из {DEAL_TYPES}.")
+        deal = Deal.create(deal_type=deal_type)
         deal.address = request.form.get("address", "")
         deal.cadastral_number = request.form.get("cadastral_number", "")
         deal.property_type = request.form.get("property_type", "")
@@ -53,7 +64,10 @@ def new_deal():
 def participants(deal_id: str):
     deal = _get_deal_or_404(deal_id)
     if request.method == "POST":
-        p = Participant.create(side=request.form["side"])
+        side = request.form.get("side", "")
+        if side not in SIDES:
+            abort(400, f"Некорректная сторона участника: {side!r}. Ожидалось одно из {SIDES}.")
+        p = Participant.create(side=side)
         p.full_name = request.form.get("full_name", "")
         p.passport_data = request.form.get("passport_data", "")
         p.registration_address = request.form.get("registration_address", "")
@@ -149,4 +163,4 @@ def download_all(deal_id: str):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=DEBUG, port=5001)
