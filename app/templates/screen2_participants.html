@@ -34,10 +34,10 @@
             {% for s in sides %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
           </select>
         </label>
-        <input type="file" name="photo" accept="image/*" required>
+        <input type="file" name="photo" accept="image/*,application/pdf,.pdf" required>
         <button class="btn" type="submit">Распознать</button>
       </form>
-      <p class="muted">Распознавание неидеально — проверьте и поправьте поля ниже перед добавлением.</p>
+      <p class="muted">Поддерживаются JPG, PNG, PDF. Можно перетащить файл в эту рамку или нажать Ctrl+V, чтобы вставить скриншот. Распознавание неидеально — проверьте и поправьте поля ниже перед добавлением.</p>
     {% endif %}
     {% if ocr_error %}<p class="warning">{{ ocr_error }}</p>{% endif %}
   </fieldset>

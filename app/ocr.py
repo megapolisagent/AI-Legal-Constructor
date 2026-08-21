@@ -12,7 +12,9 @@ import shutil
 from pathlib import Path
 
 import pytesseract
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
+
+MAX_PDF_PAGES = 10  # выписки/паспорта — единицы страниц; защита от случайно огромного файла
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 LOCAL_TESSDATA = REPO_ROOT / "tessdata"
@@ -48,12 +50,59 @@ def is_available() -> tuple[bool, str]:
     return True, ""
 
 
-def extract_text(image_bytes: bytes) -> str:
+class OcrError(RuntimeError):
+    """Текст уже готов для показа пользователю как есть (в отличие от сырых исключений
+    библиотек вроде PyMuPDF/PIL, которые тоже могут оказаться RuntimeError — поэтому
+    отдельный класс, не просто RuntimeError, см. main.py)."""
+
+
+def _pdf_to_images(data: bytes) -> list[Image.Image]:
+    import pymupdf  # локальный рендер PDF в картинку — библиотека, не внешний сервис
+
+    try:
+        doc = pymupdf.open(stream=data, filetype="pdf")
+    except Exception as exc:
+        raise OcrError("Не удалось открыть PDF — файл повреждён или защищён паролем") from exc
+    try:
+        if doc.page_count == 0:
+            raise OcrError("В этом PDF нет страниц")
+        images = []
+        for page in doc[:MAX_PDF_PAGES]:
+            pix = page.get_pixmap(dpi=300)  # выше DPI — точнее распознавание мелкого шрифта
+            images.append(Image.open(io.BytesIO(pix.tobytes("png"))))
+        return images
+    finally:
+        doc.close()
+
+
+def _bytes_to_images(data: bytes) -> list[Image.Image]:
+    """Понятная ошибка вместо технического текста исключения — экран показывает
+    результат этой функции пользователю напрямую (main.py)."""
+    if data[:4] == b"%PDF":
+        try:
+            return _pdf_to_images(data)
+        except OcrError:
+            raise
+        except Exception as exc:
+            raise OcrError("Не удалось открыть PDF — файл повреждён или защищён паролем") from exc
+    try:
+        return [Image.open(io.BytesIO(data))]
+    except UnidentifiedImageError:
+        raise OcrError(
+            "Файл не распознан как изображение или PDF. Поддерживаются: JPG, PNG, PDF."
+        )
+    except Exception as exc:
+        raise OcrError("Не удалось прочитать файл — попробуйте другой файл или пересканируйте документ") from exc
+
+
+def extract_text(file_bytes: bytes) -> str:
     ok, reason = is_available()
     if not ok:
-        raise RuntimeError(reason)
-    image = Image.open(io.BytesIO(image_bytes))
-    return pytesseract.image_to_string(image, lang="rus")
+        raise OcrError(reason)
+    if not file_bytes:
+        raise OcrError("Файл пустой")
+    images = _bytes_to_images(file_bytes)
+    return "\n".join(pytesseract.image_to_string(img, lang="rus") for img in images)
 
 
 CYRILLIC_WORD = r"[А-ЯЁ][а-яёА-ЯЁ\-]+"

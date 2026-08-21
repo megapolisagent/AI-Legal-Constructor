@@ -81,8 +81,10 @@ def scan_egrn():
             try:
                 text = ocr.extract_text(file.read())
                 draft = ocr.parse_egrn(text)
-            except Exception as exc:
-                error = f"Не удалось распознать фото: {exc}"
+            except ocr.OcrError as exc:
+                error = str(exc)  # уже понятный текст, см. ocr.py
+            except Exception:
+                error = "Не удалось прочитать файл. Попробуйте другой файл (JPG, PNG или PDF) или пересканируйте документ."
     return render_template(
         "screen1_deal.html", deal_types=DEAL_TYPES, draft=draft,
         ocr_ready=ocr_ready, ocr_reason=ocr_reason, ocr_error=error,
@@ -137,8 +139,10 @@ def scan_passport(deal_id: str):
                 text = ocr.extract_text(file.read())
                 draft = ocr.parse_passport(text)
                 draft["side"] = request.form.get("side", "")
-            except Exception as exc:
-                error = f"Не удалось распознать фото: {exc}"
+            except ocr.OcrError as exc:
+                error = str(exc)  # уже понятный текст, см. ocr.py
+            except Exception:
+                error = "Не удалось прочитать файл. Попробуйте другой файл (JPG, PNG или PDF) или пересканируйте документ."
     return render_template(
         "screen2_participants.html", deal=deal, sides=SIDES, draft=draft,
         ocr_ready=ocr_ready, ocr_reason=ocr_reason, ocr_error=error,

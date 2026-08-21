@@ -9,10 +9,10 @@
       <p class="muted">OCR недоступен: {{ ocr_reason }}</p>
     {% else %}
       <form method="post" action="{{ url_for('scan_egrn') }}" enctype="multipart/form-data" class="form">
-        <input type="file" name="photo" accept="image/*" required>
+        <input type="file" name="photo" accept="image/*,application/pdf,.pdf" required>
         <button class="btn" type="submit">Распознать</button>
       </form>
-      <p class="muted">Распознавание неидеально — все поля ниже нужно проверить перед тем, как продолжить.</p>
+      <p class="muted">Поддерживаются JPG, PNG, PDF. Можно перетащить файл в эту рамку или нажать Ctrl+V, чтобы вставить скриншот. Распознавание неидеально — все поля ниже нужно проверить перед тем, как продолжить.</p>
     {% endif %}
     {% if ocr_error %}<p class="warning">{{ ocr_error }}</p>{% endif %}
   </fieldset>
