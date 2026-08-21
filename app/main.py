@@ -137,7 +137,9 @@ def scan_passport(deal_id: str):
         error = ocr_reason
     else:
         file = request.files.get("photo")
-        data = file.read() if file else b""
+        # Не "if file" — см. комментарий в scan_egrn выше (bool(FileStorage) в Werkzeug
+        # равен bool(filename), не наличию содержимого).
+        data = file.read() if file is not None else b""
         if not data:
             error = "Файл не выбран"
         else:
