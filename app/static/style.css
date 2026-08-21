@@ -68,6 +68,8 @@ input[type=text], select, textarea {
 
 .notice { background: #eef3ea; padding: 0.75rem 1rem; border-radius: 8px; margin: 1rem 0; }
 
+.scan-box { border-style: dashed; margin-bottom: 1.5rem; }
+
 .deals-table { width: 100%; border-collapse: collapse; }
 .deals-table th, .deals-table td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--line); }
 

@@ -23,16 +23,37 @@
     <p class="muted">Участников пока нет — добавьте хотя бы одного с каждой стороны.</p>
   {% endif %}
 
+  <fieldset class="scan-box">
+    <legend>Распознать по фото паспорта</legend>
+    {% if not ocr_ready %}
+      <p class="muted">OCR недоступен: {{ ocr_reason }}</p>
+    {% else %}
+      <form method="post" action="{{ url_for('scan_passport', deal_id=deal.deal_id) }}" enctype="multipart/form-data" class="form">
+        <label>Сторона (для какого участника это фото)
+          <select name="side" required>
+            {% for s in sides %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+          </select>
+        </label>
+        <input type="file" name="photo" accept="image/*" required>
+        <button class="btn" type="submit">Распознать</button>
+      </form>
+      <p class="muted">Распознавание неидеально — проверьте и поправьте поля ниже перед добавлением.</p>
+    {% endif %}
+    {% if ocr_error %}<p class="warning">{{ ocr_error }}</p>{% endif %}
+  </fieldset>
+
   <h2>Добавить участника</h2>
   <form method="post" class="form">
     <label>Сторона
       <select name="side" required>
-        {% for s in sides %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+        {% for s in sides %}
+          <option value="{{ s }}" {% if draft.get('side') == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
       </select>
     </label>
-    <label>ФИО <input type="text" name="full_name" required></label>
-    <label>Паспортные данные <input type="text" name="passport_data" required></label>
-    <label>Адрес регистрации <input type="text" name="registration_address"></label>
+    <label>ФИО <input type="text" name="full_name" value="{{ draft.get('full_name', '') }}" required></label>
+    <label>Паспортные данные <input type="text" name="passport_data" value="{{ draft.get('passport_data', '') }}" required></label>
+    <label>Адрес регистрации <input type="text" name="registration_address" value="{{ draft.get('registration_address', '') }}"></label>
     <label>Контакт <input type="text" name="contact"></label>
     <label>Представитель (доверенность, если не сам) <input type="text" name="representative"></label>
     <label>Доля в праве (если долевая собственность) <input type="text" name="ownership_share"></label>

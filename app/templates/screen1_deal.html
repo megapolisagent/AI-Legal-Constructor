@@ -2,6 +2,21 @@
 {% block title %}Новая сделка{% endblock %}
 {% block content %}
   <h1>Экран 1 — Новая сделка</h1>
+
+  <fieldset class="scan-box">
+    <legend>Распознать по фото выписки ЕГРН</legend>
+    {% if not ocr_ready %}
+      <p class="muted">OCR недоступен: {{ ocr_reason }}</p>
+    {% else %}
+      <form method="post" action="{{ url_for('scan_egrn') }}" enctype="multipart/form-data" class="form">
+        <input type="file" name="photo" accept="image/*" required>
+        <button class="btn" type="submit">Распознать</button>
+      </form>
+      <p class="muted">Распознавание неидеально — все поля ниже нужно проверить перед тем, как продолжить.</p>
+    {% endif %}
+    {% if ocr_error %}<p class="warning">{{ ocr_error }}</p>{% endif %}
+  </fieldset>
+
   <form method="post" class="form">
     <label>Тип сделки
       <select name="deal_type" required>
@@ -11,12 +26,12 @@
 
     <fieldset>
       <legend>Объект</legend>
-      <label>Адрес <input type="text" name="address" required></label>
-      <label>Кадастровый номер <input type="text" name="cadastral_number" required></label>
+      <label>Адрес <input type="text" name="address" value="{{ draft.get('address', '') }}" required></label>
+      <label>Кадастровый номер <input type="text" name="cadastral_number" value="{{ draft.get('cadastral_number', '') }}" required></label>
       <label>Тип объекта <input type="text" name="property_type" placeholder="квартира, дом..."></label>
-      <label>Площадь <input type="text" name="area"></label>
+      <label>Площадь <input type="text" name="area" value="{{ draft.get('area', '') }}"></label>
       <label>Комнат <input type="text" name="rooms"></label>
-      <label>Основание права собственности <input type="text" name="ownership_basis"></label>
+      <label>Основание права собственности <input type="text" name="ownership_basis" value="{{ draft.get('ownership_basis', '') }}"></label>
       <label>Обременения <input type="text" name="encumbrances"></label>
     </fieldset>
 

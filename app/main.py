@@ -10,6 +10,7 @@ from flask import Flask, render_template, request, redirect, url_for, send_file,
 
 from .models import Deal, Participant, DEAL_TYPES, SIDES
 from . import storage
+from . import ocr
 from .rules import build_document_set, missing_fields
 from .generator import generate_package, cross_check, GENERATED_DIR
 
@@ -55,7 +56,37 @@ def new_deal():
         deal.encumbrances = request.form.get("encumbrances", "")
         storage.save(deal)
         return redirect(url_for("participants", deal_id=deal.deal_id))
-    return render_template("screen1_deal.html", deal_types=DEAL_TYPES)
+    ocr_ready, ocr_reason = ocr.is_available()
+    return render_template(
+        "screen1_deal.html", deal_types=DEAL_TYPES, draft={},
+        ocr_ready=ocr_ready, ocr_reason=ocr_reason,
+    )
+
+
+@app.route("/deals/scan-egrn", methods=["POST"])
+def scan_egrn():
+    """Распознаёт фото выписки ЕГРН, возвращает Экран 1 с предзаполненными (не сохранёнными)
+    полями — Мария проверяет/правит и только потом жмёт «Далее» (§7: человек видит ошибку
+    ввода до того, как она попадёт в сделку)."""
+    ocr_ready, ocr_reason = ocr.is_available()
+    draft: dict = {}
+    error = None
+    if not ocr_ready:
+        error = ocr_reason
+    else:
+        file = request.files.get("photo")
+        if not file or not file.filename:
+            error = "Файл не выбран"
+        else:
+            try:
+                text = ocr.extract_text(file.read())
+                draft = ocr.parse_egrn(text)
+            except Exception as exc:
+                error = f"Не удалось распознать фото: {exc}"
+    return render_template(
+        "screen1_deal.html", deal_types=DEAL_TYPES, draft=draft,
+        ocr_ready=ocr_ready, ocr_reason=ocr_reason, ocr_error=error,
+    )
 
 
 # --- Экран 2: Участники -------------------------------------------------------
@@ -80,7 +111,38 @@ def participants(deal_id: str):
         deal.participants.append(p)
         storage.save(deal)
         return redirect(url_for("participants", deal_id=deal.deal_id))
-    return render_template("screen2_participants.html", deal=deal, sides=SIDES)
+    ocr_ready, ocr_reason = ocr.is_available()
+    return render_template(
+        "screen2_participants.html", deal=deal, sides=SIDES, draft={},
+        ocr_ready=ocr_ready, ocr_reason=ocr_reason,
+    )
+
+
+@app.route("/deals/<deal_id>/participants/scan", methods=["POST"])
+def scan_passport(deal_id: str):
+    """Распознаёт фото паспорта, возвращает Экран 2 с предзаполненной (не сохранённой)
+    формой добавления участника — та же логика проверки перед сохранением, что и в §7."""
+    deal = _get_deal_or_404(deal_id)
+    ocr_ready, ocr_reason = ocr.is_available()
+    draft: dict = {}
+    error = None
+    if not ocr_ready:
+        error = ocr_reason
+    else:
+        file = request.files.get("photo")
+        if not file or not file.filename:
+            error = "Файл не выбран"
+        else:
+            try:
+                text = ocr.extract_text(file.read())
+                draft = ocr.parse_passport(text)
+                draft["side"] = request.form.get("side", "")
+            except Exception as exc:
+                error = f"Не удалось распознать фото: {exc}"
+    return render_template(
+        "screen2_participants.html", deal=deal, sides=SIDES, draft=draft,
+        ocr_ready=ocr_ready, ocr_reason=ocr_reason, ocr_error=error,
+    )
 
 
 @app.route("/deals/<deal_id>/participants/<participant_id>/delete", methods=["POST"])

@@ -4,3 +4,4 @@ __pycache__/
 data/deals/*.json
 generated/*
 !generated/.gitkeep
+tessdata/*.traineddata
