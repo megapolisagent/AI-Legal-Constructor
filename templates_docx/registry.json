@@ -1,0 +1,68 @@
+{
+  "entries": [
+    {
+      "key": "комиссия__аренда",
+      "document_type": "комиссия",
+      "deal_type": "аренда",
+      "version": "v1",
+      "status": "active",
+      "file": "комиссия__аренда__v1.docx"
+    },
+    {
+      "key": "комиссия__продажа",
+      "document_type": "комиссия",
+      "deal_type": "продажа",
+      "version": "v1",
+      "status": "active",
+      "file": "комиссия__продажа__v1.docx"
+    },
+    {
+      "key": "основной_договор__аренда",
+      "document_type": "основной_договор",
+      "deal_type": "аренда",
+      "version": "v1",
+      "status": "active",
+      "file": "основной_договор__аренда__v1.docx"
+    },
+    {
+      "key": "основной_договор__продажа",
+      "document_type": "основной_договор",
+      "deal_type": "продажа",
+      "version": "v1",
+      "status": "active",
+      "file": "основной_договор__продажа__v1.docx"
+    },
+    {
+      "key": "акт__аренда",
+      "document_type": "акт",
+      "deal_type": "аренда",
+      "version": "v1",
+      "status": "active",
+      "file": "акт__аренда__v1.docx"
+    },
+    {
+      "key": "акт__продажа",
+      "document_type": "акт",
+      "deal_type": "продажа",
+      "version": "v1",
+      "status": "active",
+      "file": "акт__продажа__v1.docx"
+    },
+    {
+      "key": "согласие__аренда",
+      "document_type": "согласие",
+      "deal_type": "аренда",
+      "version": "v1",
+      "status": "active",
+      "file": "согласие__аренда__v1.docx"
+    },
+    {
+      "key": "согласие__продажа",
+      "document_type": "согласие",
+      "deal_type": "продажа",
+      "version": "v1",
+      "status": "active",
+      "file": "согласие__продажа__v1.docx"
+    }
+  ]
+}
