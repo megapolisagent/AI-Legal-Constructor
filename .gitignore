@@ -1,5 +1,6 @@
 __pycache__/
 *.pyc
+*.log
 data/deals/*.json
 generated/*
 !generated/.gitkeep
