@@ -3,7 +3,7 @@
 изменился только путь вывода (output/<deal_id>/ в корне репозитория, не generated/
 внутри Flask-приложения) и то, что вызывается как CLI, а не из веб-маршрута.
 
-Использование: python scripts/generate_package.py deals/<deal_id>/deal.json
+Использование (из корня репозитория): python skills/document-assembly/scripts/generate_package.py deals/<deal_id>/deal.json
 
 Не генерирует, если есть незаполненные поля — сначала прогони check_completeness.py
 и закрой пробелы (или явно реши с пользователем, что часть документов откладывается)."""
@@ -21,7 +21,7 @@ from models import Deal, load_deal
 from registry_lookup import active_template_path, TemplateNotFound
 from rules import build_document_set, missing_fields, DocumentTask
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent  # .../scripts/../../../ → repo root
 OUTPUT_DIR = REPO_ROOT / "output"
 
 

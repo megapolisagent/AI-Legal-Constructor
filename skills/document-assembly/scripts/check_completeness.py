@@ -1,6 +1,6 @@
 """Инструмент агента: проверка полноты данных сделки перед сборкой (handoff §5, шаг 3).
 
-Использование: python scripts/check_completeness.py deals/<deal_id>/deal.json
+Использование (из корня репозитория): python skills/document-assembly/scripts/check_completeness.py deals/<deal_id>/deal.json
 
 Печатает: итоговый список документов комплекта под текущий состав участников,
 и — если есть — список незаполненных полей. Не генерирует файлы, только проверяет.

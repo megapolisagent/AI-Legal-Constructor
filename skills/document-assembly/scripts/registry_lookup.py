@@ -1,13 +1,14 @@
 """Реестр шаблонов — handoff §5. На пару (document_type × deal_type) только один active.
 Перенесено без изменений логики из archive/web_proto/app/registry.py — путь пересчитан
-под новое расположение (scripts/ теперь прямо в корне репозитория, не app/ на уровень глубже)."""
+под расположение внутри skills/document-assembly/ (шаблоны — часть этого skill, не
+общерепозиторные)."""
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-REGISTRY_PATH = REPO_ROOT / "templates_docx" / "registry.json"
+SKILL_ROOT = Path(__file__).resolve().parent.parent  # skills/document-assembly/
+REGISTRY_PATH = SKILL_ROOT / "templates_docx" / "registry.json"
 TEMPLATES_DIR = REGISTRY_PATH.parent
 
 
