@@ -18,3 +18,25 @@ telegram_bot/bot.log
 # не для git, только локально
 knowledge/found_materials/*/*
 !knowledge/found_materials/README.md
+
+# Канон Foundation, домержено 2026-08-26 — ничего из существующих правил выше не убрано
+.obnovlenie-tmp/
+.sklad-tmp/
+.env.local
+*.pem
+*.key
+.vscode/
+.idea/
+.claude/settings.local.json
+.DS_Store
+Thumbs.db
+*.bak
+*.py[cod]
+.venv/
+node_modules/
+dist/
+build/
+*.sqlite
+*.sqlite3
+*.db
+
