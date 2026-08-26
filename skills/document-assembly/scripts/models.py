@@ -30,6 +30,7 @@ class Participant:
     is_minor: bool = False
     has_other_co_owners: bool = False
     commission_value: str = ""  # % или сумма, может отличаться по участнику
+    extra_flags: dict[str, bool] = field(default_factory=dict)  # новые триггеры согласий без правки кода — см. document_rules.json
 
     @staticmethod
     def create(side: str) -> "Participant":

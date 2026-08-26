@@ -1,0 +1,46 @@
+{
+  "_comment": "Правила комплекта (handoff §13.2) — данные, не код. Агент добавляет сюда новый тип документа без правки rules.py. Каждое правило: document_type (должен совпадать с document_type в templates_docx/registry.json) + scope, которая определяет когда/сколько штук.",
+  "_scopes": {
+    "per_participant": "1 документ на каждого участника сделки (обе стороны)",
+    "once_per_deal": "1 документ на сделку, если есть хотя бы один участник",
+    "per_participant_flag": "1 документ на каждого участника, у кого выставлен флаг `flag` (ищется сначала как поле Participant, потом в Participant.extra_flags)"
+  },
+  "rules": [
+    {
+      "document_type": "комиссия",
+      "scope": "per_participant",
+      "label_template": "Комиссия — {full_name}"
+    },
+    {
+      "document_type": "основной_договор",
+      "scope": "once_per_deal",
+      "label_template": "Основной договор"
+    },
+    {
+      "document_type": "акт",
+      "scope": "once_per_deal",
+      "label_template": "Акт приёма-передачи"
+    },
+    {
+      "document_type": "согласие",
+      "scope": "per_participant_flag",
+      "flag": "is_married",
+      "flag_label": "Согласие супруга",
+      "label_template": "{flag_label} — {full_name}"
+    },
+    {
+      "document_type": "согласие",
+      "scope": "per_participant_flag",
+      "flag": "is_minor",
+      "flag_label": "Согласие органа опеки",
+      "label_template": "{flag_label} — {full_name}"
+    },
+    {
+      "document_type": "согласие",
+      "scope": "per_participant_flag",
+      "flag": "has_other_co_owners",
+      "flag_label": "Согласие содольщика",
+      "label_template": "{flag_label} — {full_name}"
+    }
+  ]
+}

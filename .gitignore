@@ -5,7 +5,16 @@ deals/*/
 !deals/.gitkeep
 output/*/
 !output/.gitkeep
-archive/web_proto/venv312/
+product-saas-prototype/venv312/
 archive/web_proto/data/deals/*.json
 archive/web_proto/generated/*
 !archive/web_proto/generated/.gitkeep
+telegram_bot/venv/
+telegram_bot/.env
+telegram_bot/sessions.json
+telegram_bot/bot.log
+
+# knowledge/found_materials/ содержит реальные документы клиентов (ФИО, паспорта) —
+# не для git, только локально
+knowledge/found_materials/*/*
+!knowledge/found_materials/README.md
