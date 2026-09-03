@@ -19,6 +19,11 @@ telegram_bot/bot.log
 knowledge/found_materials/*/*
 !knowledge/found_materials/README.md
 
+# data/clients/ — реальные документы дел (перенесены из корня 2026-09-03, план
+# advisory_enhancement_plan.md, Блок 1.2) — та же причина, не для git
+data/clients/*/
+!data/clients/README.md
+
 # Канон Foundation, домержено 2026-08-26 — ничего из существующих правил выше не убрано
 .obnovlenie-tmp/
 .sklad-tmp/
