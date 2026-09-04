@@ -19,7 +19,13 @@ from docxtpl import DocxTemplate
 
 from models import Deal, load_deal
 from registry_lookup import active_template_path, TemplateNotFound
-from rules import build_document_set, missing_fields, DocumentTask
+from rules import (
+    build_document_set,
+    missing_fields,
+    DocumentTask,
+    REQUIRED_DEAL_FIELDS,
+    REQUIRED_PARTICIPANT_FIELDS,
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent  # .../scripts/../../../ → repo root
 OUTPUT_DIR = REPO_ROOT / "output"
@@ -62,6 +68,37 @@ def _context_for_task(deal: Deal, task: DocumentTask) -> dict:
     return ctx
 
 
+class ContextValidationError(ValueError):
+    """Контекст для render() неполон по обязательным полям. Не то же самое, что
+    missing_fields() в main(): та проверка не сработает, если generate_package() вызван не
+    через CLI — эта проверка стоит прямо перед render(), защита не зависит от вызывающего кода."""
+
+
+def _validate_context(ctx: dict, label: str) -> None:
+    """Проверяет только обязательные реквизиты (тот же список, что и missing_fields() —
+    REQUIRED_DEAL_FIELDS/REQUIRED_PARTICIPANT_FIELDS из rules.py), не любое пустое поле:
+    у многих полей (special_conditions, encumbrances, deposit) легитимно пустое значение
+    означает «нет условия», не «данные потерялись» — блокировать их было бы ложной тревогой,
+    не защитой."""
+    missing = []
+    for field_name in REQUIRED_DEAL_FIELDS:
+        if not ctx.get(field_name):
+            missing.append(f"deal.{field_name}")
+
+    for group_key in ("participants",):
+        for i, p in enumerate(ctx.get(group_key) or []):
+            for field_name in REQUIRED_PARTICIPANT_FIELDS:
+                if not p.get(field_name):
+                    missing.append(f"{group_key}[{i}].{field_name}")
+
+    if missing:
+        raise ContextValidationError(
+            f"Документ «{label}»: обязательные реквизиты не заполнены — {', '.join(missing)}. "
+            "Не рендерю с пропуском — подставленное пустое значение в готовом договоре опаснее "
+            "явной остановки."
+        )
+
+
 def generate_package(deal: Deal) -> tuple[list[dict], list[dict]]:
     """Возвращает (успешно сгенерированные файлы, ошибки шаблонов) — не бросает исключение
     на отсутствующий шаблон, чтобы агент показал список проблем целиком (§5, шаг 3)."""
@@ -80,8 +117,11 @@ def generate_package(deal: Deal) -> tuple[list[dict], list[dict]]:
             errors.append({"label": task.label, "reason": str(exc)})
             continue
 
+        ctx = _context_for_task(deal, task)
+        _validate_context(ctx, task.label)
+
         doc = DocxTemplate(str(template_path))
-        doc.render(_context_for_task(deal, task))
+        doc.render(ctx)
 
         base_name = _safe_filename(task.label) or task.document_type
         filename = f"{base_name}.docx"
@@ -93,14 +133,43 @@ def generate_package(deal: Deal) -> tuple[list[dict], list[dict]]:
 
         out_path = out_dir / filename
         doc.save(str(out_path))
+
+        pdf_filename = _convert_to_pdf(out_path)
+
         files.append({
             "label": task.label,
             "filename": filename,
+            "pdf_filename": pdf_filename,
             "document_type": task.document_type,
             "template_version": version,
         })
 
     return files, errors
+
+
+def _convert_to_pdf(docx_path: Path) -> str | None:
+    """Готовый PDF рядом с .docx — финальный подписываемый артефакт, .docx остаётся
+    редактируемым рабочим файлом. Не через LibreOffice (не установлен на этой машине,
+    проверено 2026-09-03) — через docx2pdf (COM-автоматизация реально установленного MS
+    Word, `Program Files/Microsoft Office/root/Office16/WINWORD.EXE`, подтверждено прямым
+    прогоном). На машине без Word/pywin32 — не роняет всю генерацию: пропускает PDF-шаг,
+    .docx всё равно готов, явно сообщает об этом в stderr, не молчит."""
+    try:
+        from docx2pdf import convert
+    except ImportError:
+        print(
+            f"  [PDF] docx2pdf/pywin32 не установлены — «{docx_path.name}» остался только .docx.",
+            file=sys.stderr,
+        )
+        return None
+
+    pdf_path = docx_path.with_suffix(".pdf")
+    try:
+        convert(str(docx_path), str(pdf_path))
+    except Exception as exc:  # COM-ошибка/нет Word на этой машине — не роняем всю генерацию
+        print(f"  [PDF] Не удалось собрать PDF для «{docx_path.name}»: {exc}", file=sys.stderr)
+        return None
+    return pdf_path.name
 
 
 def main() -> None:
@@ -122,7 +191,8 @@ def main() -> None:
     out_dir = OUTPUT_DIR / deal.deal_id
     print(f"Собрано {len(files)} документов в {out_dir}:")
     for f in files:
-        print(f"  - {f['filename']} ({f['document_type']}, шаблон {f['template_version']})")
+        pdf_note = f", PDF: {f['pdf_filename']}" if f.get("pdf_filename") else ", PDF: не собран"
+        print(f"  - {f['filename']} ({f['document_type']}, шаблон {f['template_version']}){pdf_note}")
 
     if errors:
         print("\nОшибки шаблонов:", file=sys.stderr)
